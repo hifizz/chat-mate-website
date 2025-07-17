@@ -76,12 +76,47 @@ describe('Pako 工具函数测试', () => {
       expect(decoded.length).toBe(10000);
     });
     
+    it('应该能够处理包含换行符的 Base64 字符串', () => {
+      const originalContent = 'graph TD;\nA --> B;';
+      
+      // 编码内容
+      let encoded = encodePakoContent(originalContent);
+      
+      // 在 Base64 字符串中插入换行符
+      encoded = encoded.slice(0, 10) + '\n' + encoded.slice(10);
+      
+      // 解码内容
+      const decoded = decodePakoContent(encoded);
+      expect(decoded).toBe(originalContent);
+    });
+    
+    it('应该能够处理包含空格的 Base64 字符串', () => {
+      const originalContent = 'graph TD;\nA --> B;';
+      
+      // 编码内容
+      let encoded = encodePakoContent(originalContent);
+      
+      // 在 Base64 字符串中插入空格
+      encoded = encoded.slice(0, 10) + ' ' + encoded.slice(10);
+      
+      // 解码内容
+      const decoded = decodePakoContent(encoded);
+      expect(decoded).toBe(originalContent);
+    });
+    
     it('应该在解码无效内容时抛出错误', () => {
       const invalidEncoded = 'invalid-base64-content';
+      
+      // 临时模拟 console.error 以避免测试输出中的错误消息
+      const originalConsoleError = console.error;
+      console.error = jest.fn();
       
       expect(() => {
         decodePakoContent(invalidEncoded);
       }).toThrow();
+      
+      // 恢复 console.error
+      console.error = originalConsoleError;
     });
   });
   
@@ -112,6 +147,60 @@ describe('Pako 工具函数测试', () => {
       const result = validateContentSize(content);
       
       expect(result.compressionRatio).toBeGreaterThan(1); // 压缩比应该大于 1
+    });
+  });
+  
+  describe('端到端测试', () => {
+    it('应该能够通过 URL 参数传递和恢复 Mermaid 图表', () => {
+      // 原始 Mermaid 图表
+      const originalContent = `graph TD
+    A[开始] --> B{是否有参数?}
+    B -->|是| C[解析参数]
+    B -->|否| D[显示默认图表]
+    C --> E[渲染图表]
+    D --> E
+    E --> F[结束]`;
+      
+      // 编码内容
+      const encoded = encodePakoContent(originalContent);
+      
+      // 创建 URL（使用 encodeURIComponent 确保 URL 安全）
+      const url = `https://example.com/mermaid?pako=${encodeURIComponent(encoded)}&theme=dark`;
+      
+      // 从 URL 中提取参数
+      const params = new URLSearchParams(url.split('?')[1]);
+      const extractedEncoded = params.get('pako') || '';
+      
+      // 解码内容
+      const decoded = decodePakoContent(extractedEncoded);
+      
+      // 验证结果
+      expect(decoded).toBe(originalContent);
+    });
+    
+    it('应该能够处理 URL 中的特殊字符', () => {
+      // 原始 Mermaid 图表
+      const originalContent = `graph TD
+    A["特殊字符: !@#$%^&*()"] --> B`;
+      
+      // 编码内容
+      const encoded = encodePakoContent(originalContent);
+      
+      // 创建 URL（使用 encodeURIComponent 确保 URL 安全）
+      const url = `https://example.com/mermaid?pako=${encoded}&theme=dark`;
+      
+      // 从 URL 中提取参数（不使用 encodeURIComponent，因为在实际应用中，浏览器会自动解码）
+      const params = new URLSearchParams(url.split('?')[1]);
+      const extractedEncoded = params.get('pako') || '';
+      
+      // 确保编码内容没有被 URL 编码改变
+      expect(extractedEncoded).toBe(encoded);
+      
+      // 解码内容
+      const decoded = decodePakoContent(extractedEncoded);
+      
+      // 验证结果
+      expect(decoded).toBe(originalContent);
     });
   });
 });
