@@ -1,19 +1,30 @@
-import * as React from "react"
+import { useState, useEffect } from 'react';
 
-const MOBILE_BREAKPOINT = 768
+/**
+ * 移动设备检测 Hook
+ * @param breakpoint - 移动设备断点宽度（默认为 768px）
+ * @returns 是否为移动设备
+ */
+export const useMobile = (breakpoint: number = 768): boolean => {
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  useEffect(() => {
+    // 初始检测
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < breakpoint);
+    };
 
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
+    // 首次运行
+    checkMobile();
 
-  return !!isMobile
-}
+    // 添加窗口大小变化监听
+    window.addEventListener('resize', checkMobile);
+
+    // 清理监听器
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, [breakpoint]);
+
+  return isMobile;
+};

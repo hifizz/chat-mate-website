@@ -1,107 +1,110 @@
-import Image from "next/image";
-import { ThemeToggle } from "@/components/theme-toggle";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { MermaidViewer } from '@/components/mermaid-viewer';
+import { AppError, ErrorType, MermaidTheme } from '@/types';
+import { getURLParamsFromBrowser } from '@/utils/url';
+import { decodePakoContent } from '@/utils/pako';
+
+// 默认的 Mermaid 图表示例
+const DEFAULT_MERMAID_CONTENT = `graph TD
+    A[开始] --> B{是否有参数?}
+    B -->|是| C[解析参数]
+    B -->|否| D[显示默认图表]
+    C --> E[渲染图表]
+    D --> E
+    E --> F[结束]`;
 
 export default function Home() {
+  const [content, setContent] = useState<string>(DEFAULT_MERMAID_CONTENT);
+  const [theme, setTheme] = useState<MermaidTheme>('default');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<AppError | null>(null);
+
+  // 从 URL 加载内容
+  useEffect(() => {
+    try {
+      // 获取 URL 参数
+      const params = getURLParamsFromBrowser();
+      
+      // 如果有 pako 参数，解码内容
+      if (params.pako) {
+        try {
+          const decodedContent = decodePakoContent(params.pako);
+          setContent(decodedContent);
+        } catch (err) {
+          setError({
+            type: ErrorType.DECODE_ERROR,
+            message: '无法解码 URL 内容',
+            details: err
+          });
+          // 保留默认内容
+        }
+      }
+      
+      // 设置主题
+      if (params.theme) {
+        setTheme(params.theme as MermaidTheme);
+      }
+      
+      setIsLoading(false);
+    } catch (err) {
+      setError({
+        type: ErrorType.URL_PARSE_ERROR,
+        message: '解析 URL 参数失败',
+        details: err
+      });
+      setIsLoading(false);
+    }
+  }, []);
+
+  // 处理渲染错误
+  const handleRenderError = (error: AppError) => {
+    setError(error);
+  };
+
+  // 渲染完成回调
+  const handleRenderComplete = () => {
+    console.log('图表渲染完成');
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <div className="fixed top-4 right-4 z-10">
-        <ThemeToggle />
-      </div>
+    <div className="flex flex-col min-h-screen">
+      {/* 顶部导航栏 */}
+      <header className="sticky top-0 z-10 bg-background border-b border-border h-14 flex items-center px-4">
+        <h1 className="text-lg font-semibold flex-1">Mermaid 图表查看器</h1>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
+      </header>
 
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+      {/* 主要内容区域 */}
+      <main className="flex-1 p-4">
+        <div className="container mx-auto h-full flex flex-col">
+          {/* 错误提示 */}
+          {error && !isLoading && (
+            <div className="mb-4 p-4 border border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-md text-red-800 dark:text-red-300">
+              <h3 className="text-lg font-medium mb-2">发生错误</h3>
+              <p>{error.message}</p>
+            </div>
+          )}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+          {/* 图表查看器 */}
+          <div className="flex-1 border border-border rounded-md overflow-hidden">
+            <MermaidViewer 
+              content={content}
+              theme={theme}
+              onError={handleRenderError}
+              onRenderComplete={handleRenderComplete}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* 底部状态栏 */}
+      <footer className="bg-muted py-2 px-4 text-center text-sm text-muted-foreground">
+        <p>Mermaid 图表查看器 - 基于 Next.js 和 Mermaid.js 构建</p>
       </footer>
     </div>
   );
