@@ -1,12 +1,20 @@
-# VibeCoding Next.js Scaffold
+# Mermaid Chart Viewer
 
-This is a [Next.js](https://nextjs.org) project scaffold crafted for VibeCoding, bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A web-based viewer for Mermaid diagrams, built with Next.js and Mermaid.js.
 
 > **中文版本**: [README-zh.md](./README-zh.md)
 
-## About VibeCoding Scaffold
+## About Mermaid Chart Viewer
 
-This scaffold is carefully designed for VibeCoding community developers, integrating modern frontend development best practices and toolchains to help you quickly start high-quality React projects.
+Mermaid Chart Viewer is a lightweight web application that allows you to view and share Mermaid diagrams through URL parameters. It supports various diagram types including flowcharts, sequence diagrams, class diagrams, and more.
+
+## Features
+
+- **URL-based Diagram Sharing**: Share diagrams via URL with compressed content
+- **Theme Support**: Switch between different Mermaid themes
+- **Responsive Design**: Works on both desktop and mobile devices
+- **Error Handling**: Friendly error messages for invalid diagram syntax
+- **Dark Mode Support**: Seamless integration with system theme preferences
 
 ## Tech Stack
 
@@ -17,221 +25,87 @@ This project uses a modern frontend technology stack:
 - **[TypeScript](https://www.typescriptlang.org)** - Type-safe JavaScript
 - **[Tailwind CSS v4](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Copy-paste component library
-- **[Radix UI](https://www.radix-ui.com)** - Unstyled, accessible UI components
-- **[Lucide React](https://lucide.dev)** - Beautiful icon library
+- **[Mermaid.js](https://mermaid.js.org/)** - JavaScript-based diagramming and charting tool
+- **[Pako.js](https://github.com/nodeca/pako)** - zlib port to JavaScript for content compression
 
-## Tailwind CSS
+## How It Works
 
-This project uses **Tailwind CSS v4**, a utility-first CSS framework that enables you to rapidly build modern user interfaces.
+1. **URL Parameter Parsing**: The application reads the `pako` parameter from the URL
+2. **Content Decompression**: Compressed content is decompressed using Pako.js
+3. **Diagram Rendering**: Mermaid.js renders the diagram based on the decompressed content
+4. **Theme Application**: The diagram is styled according to the selected theme
 
-### Features
+### URL Parameters
 
-- 🎨 Utility-first design philosophy
-- 📱 Responsive design support
-- 🌙 Dark mode support
-- ⚡ Lightning-fast build speed
-- 🔧 Highly customizable
+- `pako`: Base64-encoded compressed Mermaid diagram content
+- `theme`: Mermaid theme name (default, dark, forest, neutral, base)
+- `darkMode`: Boolean flag for dark mode preference
 
-### Configuration Files
+## Usage Examples
 
-- CSS variables definition: `app/globals.css`
-- PostCSS configuration: `postcss.config.mjs`
+### Basic URL Structure
 
-### Usage Examples
-
-```tsx
-// Basic styling
-<div className="flex items-center justify-center min-h-screen bg-background">
-  <h1 className="text-4xl font-bold text-foreground">Hello World</h1>
-</div>
-
-// Responsive design
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  {/* Content */}
-</div>
+```
+https://your-domain.com/?pako=<compressed-content>&theme=dark
 ```
 
-## shadcn/ui
+### Example Diagram
 
-shadcn/ui is a component library built on Radix UI and Tailwind CSS, providing beautiful, accessible, and customizable React components.
-
-### Features
-
-- ✅ **Copy & Paste** - Copy component code into your project, full control
-- 🎯 **Accessibility** - Built on Radix UI, follows WAI-ARIA standards
-- 🎨 **Customizable** - Uses CSS variables, supports theme switching
-- 🔧 **TypeScript** - Complete type support
-- 📦 **Tree-shakable** - Only use the components you need
-
-### Current Configuration
-
-```json
-{
-  "style": "new-york",        // Using New York design style
-  "baseColor": "neutral",     // Base color tone is neutral
-  "cssVariables": true,       // Enable CSS variables
-  "iconLibrary": "lucide"     // Use Lucide icon library
-}
-```
-
-### Pre-installed Components
-
-The project comes pre-installed with the following shadcn/ui components:
-
-**Layout Components**
-
-- `Card` - Card container
-- `Separator` - Divider line
-- `Sidebar` - Sidebar component
-- `Sheet` - Drawer component
-
-**Form Components**
-
-- `Button` - Button
-- `Input` - Input field
-- `Textarea` - Multi-line input
-- `Select` - Selector
-- `Checkbox` - Checkbox
-- `Radio Group` - Radio button group
-- `Switch` - Toggle switch
-- `Slider` - Slider
-
-**Navigation Components**
-
-- `Navigation Menu` - Navigation menu
-- `Breadcrumb` - Breadcrumb
-- `Pagination` - Pagination
-
-**Feedback Components**
-
-- `Alert` - Alert message
-- `Alert Dialog` - Alert dialog
-- `Dialog` - Dialog
-- `Drawer` - Drawer
-- `Tooltip` - Tooltip
-- `Popover` - Popover
-- `Progress` - Progress bar
-
-### Adding New Components
-
-Use shadcn/ui CLI to add new components:
-
-```bash
-# Add single component
-pnpm dlx shadcn@latest add button
-
-# Add multiple components
-pnpm dlx shadcn@latest add card dialog sheet
-
-# View all available components
-pnpm dlx shadcn@latest add
-```
-
-### Usage Example
-
-```tsx
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-
-export default function Example() {
-  return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Login</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Input placeholder="Email address" type="email" />
-        <Input placeholder="Password" type="password" />
-        <Button className="w-full">Login</Button>
-      </CardContent>
-    </Card>
-  )
-}
-```
-
-## Theme System
-
-The project supports dark/light mode switching, implemented through `next-themes`:
-
-```tsx
-import { useTheme } from "next-themes"
-
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-  
-  return (
-    <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-      Toggle Theme
-    </button>
-  )
-}
+```mermaid
+graph TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    C --> E[Enjoy]
+    D --> B
 ```
 
 ## Development Guide
 
-### Styling Best Practices
+### Prerequisites
 
-1. **Prioritize Tailwind CSS classes** - Avoid custom CSS
-2. **Use CSS variables** - Convenient for theme switching and maintenance
-3. **Follow design system** - Use predefined spacing, colors, etc.
+- Node.js 18.0.0 or higher
+- pnpm (recommended package manager)
 
-### Component Development Workflow
+### Getting Started
 
-1. Check [shadcn/ui component library](https://ui.shadcn.com/components)
-2. Use CLI to add needed components
-3. Customize component styles as needed
-4. Ensure components support dark mode
-
-## Getting Started
-
-First, run the development server:
+First, install dependencies:
 
 ```bash
-# Recommended: use pnpm
-pnpm dev
+# Using pnpm (recommended)
+pnpm install
+```
 
-# Or use other package managers
-npm run dev
-yarn dev
-bun dev
+Then, run the development server:
+
+```bash
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/app`: Next.js application pages
+- `/components`: React components including the Mermaid viewer
+- `/hooks`: Custom React hooks for Mermaid rendering
+- `/types`: TypeScript type definitions
+- `/utils`: Utility functions for URL parsing and content compression
+
+## Roadmap
+
+- [ ] Zoom and pan controls for diagrams
+- [ ] Export to SVG/PNG/JPG
+- [ ] Copy diagram source code
+- [ ] AI-powered syntax correction
+- [ ] Enhanced sharing options
+- [ ] Mobile touch interactions
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Useful Resources
-
-### Tailwind CSS
-
-- [Official Documentation](https://tailwindcss.com/docs)
-- [Tailwind UI](https://tailwindui.com) - Official component library
-- [Tailwind Play](https://play.tailwindcss.com) - Online playground
-
-### shadcn/ui
-
-- [Official Documentation](https://ui.shadcn.com)
-- [Component Library](https://ui.shadcn.com/components)
-- [Theme Configuration](https://ui.shadcn.com/themes)
-- [CLI Documentation](https://ui.shadcn.com/cli)
-
-### Design Resources
-
-- [Radix Colors](https://www.radix-ui.com/colors) - Color system
-- [Lucide Icons](https://lucide.dev) - Icon library
-- [Font: Geist](https://vercel.com/font) - Typography
+- [Mermaid.js Documentation](https://mermaid.js.org/intro/) - Learn about Mermaid diagram syntax
+- [Next.js Documentation](https://nextjs.org/docs) - Learn about Next.js features and API
+- [Pako.js Documentation](https://github.com/nodeca/pako) - Learn about zlib compression in JavaScript
 
 ## Deploy on Vercel
 
@@ -241,4 +115,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ---
 
-**Happy Coding with VibeCoding! 🚀**
+**Happy Diagramming! 📊**
