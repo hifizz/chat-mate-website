@@ -36,6 +36,7 @@ export interface ExportOptions {
   width?: number;
   height?: number;
   quality?: number;
+  scale?: number;
   format: 'svg' | 'png' | 'jpg';
 }
 

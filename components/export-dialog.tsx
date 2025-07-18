@@ -6,6 +6,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { ExportOptions } from '@/types';
 import { exportAsSVG, exportAsPNG, exportAsJPG } from '@/utils/export';
+import { LoadingState } from '@/components/ui/loading-state';
+import { useMobile } from '@/hooks/use-mobile';
 
 interface ExportDialogProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   const [quality, setQuality] = useState<number>(90);
   const [scale, setScale] = useState<number>(2);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const isMobile = useMobile();
 
   // 处理导出
   const handleExport = async () => {
@@ -65,78 +68,84 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className={isMobile ? "max-w-[90vw] sm:max-w-[425px]" : "sm:max-w-[425px]"}>
         <DialogHeader>
           <DialogTitle>导出图表</DialogTitle>
           <DialogDescription>
             选择导出格式和选项
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="format">导出格式</Label>
-            <RadioGroup
-              id="format"
-              value={format}
-              onValueChange={(value) => setFormat(value as ExportOptions['format'])}
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="svg" id="svg" />
-                <Label htmlFor="svg">SVG (矢量)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="png" id="png" />
-                <Label htmlFor="png">PNG (透明背景)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="jpg" id="jpg" />
-                <Label htmlFor="jpg">JPG (白色背景)</Label>
-              </div>
-            </RadioGroup>
+
+        {isExporting ? (
+          <LoadingState message="正在导出图表，请稍候..." />
+        ) : (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="format">导出格式</Label>
+              <RadioGroup
+                id="format"
+                value={format}
+                onValueChange={(value) => setFormat(value as ExportOptions['format'])}
+                className={isMobile ? "flex flex-col space-y-2" : "flex space-x-4"}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="svg" id="svg" />
+                  <Label htmlFor="svg">SVG (矢量)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="png" id="png" />
+                  <Label htmlFor="png">PNG (透明背景)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="jpg" id="jpg" />
+                  <Label htmlFor="jpg">JPG (白色背景)</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {format !== 'svg' && (
+              <>
+                <div className="grid gap-2">
+                  <div className="flex justify-between">
+                    <Label htmlFor="quality">质量 ({quality}%)</Label>
+                  </div>
+                  <Slider
+                    id="quality"
+                    min={10}
+                    max={100}
+                    step={5}
+                    value={[quality]}
+                    onValueChange={(values) => setQuality(values[0])}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <div className="flex justify-between">
+                    <Label htmlFor="scale">缩放比例 ({scale}x)</Label>
+                  </div>
+                  <Slider
+                    id="scale"
+                    min={1}
+                    max={4}
+                    step={0.5}
+                    value={[scale]}
+                    onValueChange={(values) => setScale(values[0])}
+                  />
+                </div>
+              </>
+            )}
           </div>
-          
-          {format !== 'svg' && (
-            <>
-              <div className="grid gap-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="quality">质量 ({quality}%)</Label>
-                </div>
-                <Slider
-                  id="quality"
-                  min={10}
-                  max={100}
-                  step={5}
-                  value={[quality]}
-                  onValueChange={(values) => setQuality(values[0])}
-                  disabled={format === 'svg'}
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="scale">缩放比例 ({scale}x)</Label>
-                </div>
-                <Slider
-                  id="scale"
-                  min={1}
-                  max={4}
-                  step={0.5}
-                  value={[scale]}
-                  onValueChange={(values) => setScale(values[0])}
-                  disabled={format === 'svg'}
-                />
-              </div>
-            </>
-          )}
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        )}
+
+        <DialogFooter className={isMobile ? "flex-col space-y-2" : undefined}>
+          <Button variant="outline" onClick={onClose} className={isMobile ? "w-full" : undefined}>
             取消
           </Button>
-          <Button onClick={handleExport} disabled={isExporting}>
+          <Button
+            onClick={handleExport}
+            disabled={isExporting}
+            className={isMobile ? "w-full" : undefined}
+          >
             {isExporting ? '导出中...' : '导出'}
           </Button>
         </DialogFooter>
