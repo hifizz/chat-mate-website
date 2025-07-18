@@ -34,11 +34,17 @@ export const useMermaid = ({
   // 初始化 Mermaid 配置
   useEffect(() => {
     try {
+      // 根据主题设置 Mermaid 配置
+      const mermaidTheme = getMermaidTheme(theme);
+      
       mermaid.initialize({
         startOnLoad: false,
-        theme: theme,
+        theme: mermaidTheme,
         securityLevel: 'loose', // 允许点击事件
         fontFamily: 'sans-serif',
+        themeVariables: {
+          // 可以在这里自定义主题变量
+        }
       });
     } catch (err) {
       const appError: AppError = {
@@ -50,6 +56,22 @@ export const useMermaid = ({
       onError?.(appError);
     }
   }, [theme, onError]);
+
+  // 将我们的主题名称映射到 Mermaid 主题
+  const getMermaidTheme = (theme: string): string => {
+    switch (theme) {
+      case 'dark':
+        return 'dark';
+      case 'forest':
+        return 'forest';
+      case 'neutral':
+        return 'neutral';
+      case 'base':
+        return 'base';
+      default:
+        return 'default';
+    }
+  };
 
   // 渲染 Mermaid 图表
   const renderMermaid = useCallback(async (content: string) => {
