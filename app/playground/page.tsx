@@ -6,6 +6,7 @@ import { MermaidViewer } from '@/components/mermaid-viewer';
 import { CodeEditor } from '@/components/code-editor';
 import { ControlPanel } from '@/components/control-panel';
 import { ExportDialog } from '@/components/export-dialog';
+import { ShareDialog } from '@/components/share-dialog';
 import { AppError, MermaidTheme } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +29,7 @@ export default function Playground() {
   const [error, setError] = useState<AppError | null>(null);
   const [isFixing, setIsFixing] = useState<boolean>(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState<boolean>(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState<boolean>(false);
   
   // 用于导出功能的 ref
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -102,25 +104,8 @@ export default function Playground() {
   };
 
   // 分享图表
-  const handleShare = async () => {
-    try {
-      // 编码内容
-      const encoded = encodePakoContent(content);
-      
-      // 生成分享链接
-      const shareUrl = `${window.location.origin}?pako=${encoded}&theme=${theme}`;
-      
-      // 复制到剪贴板
-      const success = await copyToClipboard(shareUrl);
-      
-      if (success) {
-        toast.success('分享链接已复制到剪贴板');
-      } else {
-        toast.error('复制分享链接失败');
-      }
-    } catch (err) {
-      toast.error('生成分享链接失败');
-    }
+  const handleShare = () => {
+    setIsShareDialogOpen(true);
   };
 
   // 导出图表
@@ -231,6 +216,14 @@ export default function Playground() {
         containerElement={previewContainerRef.current}
         svgElement={previewContainerRef.current?.querySelector('svg') || null}
         filename="mermaid-chart"
+      />
+
+      {/* 分享对话框 */}
+      <ShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        content={content}
+        theme={theme}
       />
     </div>
   );

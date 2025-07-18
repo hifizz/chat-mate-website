@@ -79,14 +79,60 @@ export const generateShareURL = (
 };
 
 /**
+ * URL 安全长度限制常量
+ */
+export const URL_SAFE_LIMIT = 2000; // 保守的安全限制
+export const URL_WARNING_LIMIT = 1800; // 警告阈值
+
+/**
  * 检查 URL 长度是否超过安全限制
  * @param url - 要检查的 URL
  * @returns 是否超过安全限制
  */
 export const isURLTooLong = (url: string): boolean => {
-  // 大多数浏览器的安全限制约为 2000 字符
-  const URL_SAFE_LIMIT = 2000;
   return url.length > URL_SAFE_LIMIT;
+};
+
+/**
+ * 检查 URL 长度是否接近限制（需要警告）
+ * @param url - 要检查的 URL
+ * @returns 是否接近限制
+ */
+export const isURLNearLimit = (url: string): boolean => {
+  return url.length > URL_WARNING_LIMIT && url.length <= URL_SAFE_LIMIT;
+};
+
+/**
+ * 获取 URL 长度状态
+ * @param url - 要检查的 URL
+ * @returns URL 长度状态对象
+ */
+export const getURLLengthStatus = (url: string): {
+  length: number;
+  status: 'safe' | 'warning' | 'danger';
+  message: string;
+} => {
+  const length = url.length;
+  
+  if (length > URL_SAFE_LIMIT) {
+    return {
+      length,
+      status: 'danger',
+      message: `URL 长度 (${length}) 超过安全限制 (${URL_SAFE_LIMIT})，可能无法在某些浏览器中正常工作`
+    };
+  } else if (length > URL_WARNING_LIMIT) {
+    return {
+      length,
+      status: 'warning',
+      message: `URL 长度 (${length}) 接近限制，建议优化内容以确保兼容性`
+    };
+  } else {
+    return {
+      length,
+      status: 'safe',
+      message: `URL 长度 (${length}) 在安全范围内`
+    };
+  }
 };
 
 /**

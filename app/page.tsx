@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MermaidViewer } from '@/components/mermaid-viewer';
+import { ShareDialog } from '@/components/share-dialog';
 import { AppError, ErrorType, MermaidTheme } from '@/types';
 import { getURLParamsFromBrowser } from '@/utils/url';
 import { decodePakoContent } from '@/utils/pako';
@@ -26,6 +27,7 @@ export default function Home() {
   const [content, setContent] = useState<string>(DEFAULT_MERMAID_CONTENT);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<AppError | null>(null);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState<boolean>(false);
   
   // 使用主题管理 Hook
   const { currentTheme, changeTheme } = useThemeManager();
@@ -93,6 +95,11 @@ export default function Home() {
       toast.error('复制失败，请手动复制');
       showManualCopyDialog();
     }
+  };
+
+  // 处理分享功能
+  const handleShare = () => {
+    setIsShareDialogOpen(true);
   };
 
   // 显示手动复制对话框
@@ -219,6 +226,20 @@ export default function Home() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={handleShare}>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      分享图表
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>生成分享链接</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
@@ -238,6 +259,14 @@ export default function Home() {
       <footer className="bg-muted py-2 px-4 text-center text-sm text-muted-foreground">
         <p>Mermaid 图表查看器 - 基于 Next.js 和 Mermaid.js 构建</p>
       </footer>
+
+      {/* 分享对话框 */}
+      <ShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        content={content}
+        theme={currentTheme}
+      />
     </div>
   );
 }
