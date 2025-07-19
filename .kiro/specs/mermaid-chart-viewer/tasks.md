@@ -99,7 +99,7 @@
   - [x] 创建 Next.js API Routes 处理 AI 请求
   - [x] 集成 Deepseek API 调用
   - [x] 集成豆包 API 调用
-  - [ ] 实现 AI 修复结果的应用和预览
+  - [x] 实现 AI 修复结果的应用和预览
   - **验收标准**:
     - API Routes 能够正确处理 AI 请求
     - Deepseek API 集成正常工作

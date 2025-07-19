@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/utils/clipboard';
-import { useAIFix } from '@/hooks/use-ai-fix';
+
 
 // 默认的 Mermaid 图表示例
 const DEFAULT_MERMAID_CONTENT = `graph TD
@@ -38,24 +38,6 @@ export default function Playground() {
   const handleErrorClear = useCallback(() => {
     setError(null);
   }, []);
-
-  // 使用 AI 修复 Hook
-  const {
-    isFixing,
-    isAIFixDialogOpen,
-    originalContent,
-    fixedContent,
-    fixMessage,
-    isApplyingFix,
-    handleAIFix,
-    handleApplyFix,
-    handleRejectFix,
-    setIsAIFixDialogOpen,
-  } = useAIFix({
-    content,
-    onContentChange: setContent,
-    onErrorClear: handleErrorClear,
-  });
 
   // 处理渲染错误
   const handleRenderError = (error: AppError) => {
@@ -152,14 +134,12 @@ export default function Playground() {
                 <div ref={previewContainerRef} className="flex-1 min-h-[300px] p-4">
                   {error && (
                     <div className='mb-2'>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAIFix}
-                        disabled={isFixing}
-                      >
-                        {isFixing ? '修复中...' : 'AI 修复'}
-                      </Button>
+                      <AIFixDialog
+                        content={content}
+                        theme={theme}
+                        onContentChange={setContent}
+                        onErrorClear={handleErrorClear}
+                      />
                     </div>
                   )}
                   <MermaidViewer
@@ -179,11 +159,11 @@ export default function Playground() {
               theme={theme}
               onThemeChange={handleThemeChange}
               onCopyContent={handleCopyContent}
-              onAIFix={handleAIFix}
+              onAIFix={() => {}} // 现在由 AIFixDialog 内部处理
               onShare={handleShare}
               onExport={handleExport}
               onReset={handleReset}
-              isFixing={isFixing}
+              isFixing={false} // 现在由 AIFixDialog 内部处理
             />
           </div>
         </div>
@@ -211,18 +191,7 @@ export default function Playground() {
         theme={theme}
       />
 
-      {/* AI 修复预览对话框 */}
-      <AIFixDialog
-        open={isAIFixDialogOpen}
-        onOpenChange={setIsAIFixDialogOpen}
-        originalContent={originalContent}
-        fixedContent={fixedContent}
-        fixMessage={fixMessage}
-        theme={theme}
-        onApplyFix={handleApplyFix}
-        onRejectFix={handleRejectFix}
-        isApplying={isApplyingFix}
-      />
+
     </div>
   );
 }
