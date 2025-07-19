@@ -8,7 +8,7 @@
 const DOUBAO_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'; // 使用正确的豆包API域名
 const DOUBAO_MODEL = 'doubao-seed-1-6-flash-250615'; // 使用您的实际模型ID
 
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const DEEPSEEK_MODEL = 'deepseek-chat'; // 使用Deepseek Chat模型
 
 /**
