@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     // 解析请求体
     const body = await request.json();
-    const { content, provider = 'auto' } = body;
+    const { content, provider = 'doubao' } = body;
 
     if (!content || typeof content !== 'string') {
       return NextResponse.json(
@@ -28,11 +28,10 @@ export async function POST(request: NextRequest) {
       success: true,
       fixedContent: result.fixedContent,
       message: result.message,
-      provider: result.provider || 'local'
+      // provider: result.provider || 'local', // 不要暴露我们的模型
     });
 
   } catch (error) {
-    console.error('AI 修复错误:', error);
     return NextResponse.json(
       { error: '处理请求时发生错误' },
       { status: 500 }

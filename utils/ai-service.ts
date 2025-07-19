@@ -5,8 +5,8 @@
  */
 
 // AI API配置
-const DOUBAO_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
-const DOUBAO_MODEL = 'doubao-1-5-pro-32k-250115'; // 使用豆包1.5 Pro模型
+const DOUBAO_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'; // 使用正确的豆包API域名
+const DOUBAO_MODEL = 'doubao-seed-1-6-flash-250615'; // 使用您的实际模型ID
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const DEEPSEEK_MODEL = 'deepseek-chat'; // 使用Deepseek Chat模型
@@ -78,20 +78,28 @@ export async function fixMermaidWithAI(
     } else if (provider === 'doubao') {
       const apiKey = process.env.DOUBAO_API_KEY;
       if (apiKey) {
-        const result = await fixWithDoubao(content, apiKey);
-        return {
-          ...result,
-          provider: 'doubao'
-        };
+        try {
+          const result = await fixWithDoubao(content, apiKey);
+          return {
+            ...result,
+            provider: 'doubao'
+          };
+        } catch (error) {
+          // 豆包API调用失败，静默回退到本地规则
+        }
       }
     } else if (provider === 'deepseek') {
       const apiKey = process.env.DEEPSEEK_API_KEY;
       if (apiKey) {
-        const result = await fixWithDeepseek(content, apiKey);
-        return {
-          ...result,
-          provider: 'deepseek'
-        };
+        try {
+          const result = await fixWithDeepseek(content, apiKey);
+          return {
+            ...result,
+            provider: 'deepseek'
+          };
+        } catch (error) {
+          // Deepseek API调用失败，静默回退到本地规则
+        }
       }
     }
 
@@ -116,14 +124,15 @@ async function fixWithDoubao(content: string, apiKey: string): Promise<{
   fixedContent: string;
   message: string;
 }> {
-  // 构建请求体
-  const requestBody = {
-    model: DOUBAO_MODEL,
-    messages: [
-      {
-        role: 'system',
-        content: `你是一个专门修复Mermaid图表语法错误的AI助手。你的任务是分析用户提供的Mermaid代码，找出并修复其中的语法错误。
-        
+  try {
+    // 根据豆包API文档构建请求体
+    const requestBody = {
+      model: DOUBAO_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: `你是一个专门修复Mermaid图表语法错误的AI助手。你的任务是分析用户提供的Mermaid代码，找出并修复其中的语法错误。
+
 常见的Mermaid语法错误包括：
 1. 缺少箭头（-->）
 2. 节点定义不完整（缺少方括号[]或花括号{}）
@@ -133,47 +142,52 @@ async function fixWithDoubao(content: string, apiKey: string): Promise<{
 6. 样式定义错误
 
 请仅返回修复后的完整代码，不要包含任何解释或其他文本。`
+        },
+        {
+          role: 'user',
+          content: `请修复以下Mermaid图表代码中的语法错误：\n\n${content}`
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 4096,
+      stream: false
+    };
+    
+    // 调用豆包API
+    const response = await fetch(DOUBAO_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       },
-      {
-        role: 'user',
-        content: `请修复以下Mermaid图表代码中的语法错误：\n\n${content}`
-      }
-    ],
-    temperature: 0.2, // 低温度，保持输出确定性
-    max_tokens: 4096
-  };
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`豆包API请求失败: ${response.status} ${response.statusText} - ${errorText}`);
+    }
 
-  // 调用豆包API
-  const response = await fetch(DOUBAO_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  });
+    const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(`豆包API请求失败: ${response.status} ${response.statusText}`);
+    // 根据豆包API文档提取AI修复后的内容
+    const fixedContent = data.choices?.[0]?.message?.content?.trim();
+
+    if (!fixedContent) {
+      throw new Error('豆包AI未返回有效的修复内容');
+    }
+
+    // 移除可能的代码块标记
+    const cleanedContent = cleanMermaidCode(fixedContent);
+
+    return {
+      success: true,
+      fixedContent: cleanedContent,
+      message: '已使用豆包AI修复语法错误'
+    };
+  } catch (error) {
+    throw error; // 重新抛出错误，让上层处理
   }
-
-  const data = await response.json();
-
-  // 提取AI修复后的内容
-  const fixedContent = data.choices[0]?.message?.content?.trim();
-
-  if (!fixedContent) {
-    throw new Error('豆包AI未返回有效的修复内容');
-  }
-
-  // 移除可能的代码块标记
-  const cleanedContent = cleanMermaidCode(fixedContent);
-
-  return {
-    success: true,
-    fixedContent: cleanedContent,
-    message: '已使用豆包AI修复语法错误'
-  };
 }
 
 /**
@@ -276,7 +290,6 @@ function fixWithLocalRules(content: string): {
   // 简单的语法修复逻辑
   let fixedContent = content;
   let hasChanges = false;
-  let originalContent = content;
 
   // 修复常见的语法错误
   const fixedArrows = fixMissingArrows(fixedContent);

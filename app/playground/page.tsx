@@ -61,17 +61,21 @@ export default function Playground() {
 
     setIsFixing(true);
     try {
-      // 调用 AI 修复 API
+
+      // 调用 AI 修复 API，明确指定使用豆包 API
+      const requestBody = { content };
+
       const response = await fetch('/api/ai-fix', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error('API 请求失败');
+        const errorText = await response.text();
+        throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -79,7 +83,7 @@ export default function Playground() {
       if (data.success && data.fixedContent) {
         // 更新内容为修复后的代码
         setContent(data.fixedContent);
-        toast.success(data.message || '语法已修复');
+        toast.success(`${data.message || '语法已修复'}`);
         setError(null);
       } else {
         toast.info(data.message || '代码无需修复');
