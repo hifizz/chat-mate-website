@@ -96,8 +96,8 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
 - [x] 8. AI 语法修复服务
-  - [ ] 创建 Next.js API Routes 处理 AI 请求
-  - [ ] 集成 Deepseek API 调用
+  - [x] 创建 Next.js API Routes 处理 AI 请求
+  - [x] 集成 Deepseek API 调用
   - [x] 集成豆包 API 调用
   - [ ] 实现 AI 修复结果的应用和预览
   - **验收标准**:

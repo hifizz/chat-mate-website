@@ -1,9 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { MermaidViewerProps, ErrorType, AppError, MermaidTheme } from '@/types';
+import { MermaidViewerProps, MermaidTheme } from '@/types';
 import { useMermaid } from '@/hooks/use-mermaid';
 import { TouchFriendlyContainer, TouchFriendlyContainerHandle } from '@/components/touch-friendly-container';
 import { Toolbar } from '@/components/toolbar';
-import { cn } from '@/lib/utils';
 
 /**
  * Mermaid 图表查看器组件
@@ -23,7 +22,7 @@ export const MermaidViewer: React.FC<MermaidViewerProps> = ({
   const touchContainerRef = useRef<TouchFriendlyContainerHandle>(null);
 
   // 使用 Mermaid Hook 渲染图表
-  const { svg, loading, error, renderMermaid } = useMermaid({
+  const { svg, loading, error } = useMermaid({
     content,
     theme,
     onError

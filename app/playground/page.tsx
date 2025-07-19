@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MermaidViewer } from '@/components/mermaid-viewer';
 import { CodeEditor } from '@/components/code-editor';
 import { ControlPanel } from '@/components/control-panel';
 import { ExportDialog } from '@/components/export-dialog';
 import { ShareDialog } from '@/components/share-dialog';
+import { AIFixDialog } from '@/components/ai-fix-dialog';
 import { AppError, MermaidTheme } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/utils/clipboard';
+import { useAIFix } from '@/hooks/use-ai-fix';
 
 // 默认的 Mermaid 图表示例
 const DEFAULT_MERMAID_CONTENT = `graph TD
@@ -26,12 +28,34 @@ export default function Playground() {
   const [content, setContent] = useState<string>(DEFAULT_MERMAID_CONTENT);
   const [theme, setTheme] = useState<MermaidTheme>('default');
   const [error, setError] = useState<AppError | null>(null);
-  const [isFixing, setIsFixing] = useState<boolean>(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState<boolean>(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState<boolean>(false);
 
   // 用于导出功能的 ref
   const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  // 清除错误的回调函数
+  const handleErrorClear = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // 使用 AI 修复 Hook
+  const {
+    isFixing,
+    isAIFixDialogOpen,
+    originalContent,
+    fixedContent,
+    fixMessage,
+    isApplyingFix,
+    handleAIFix,
+    handleApplyFix,
+    handleRejectFix,
+    setIsAIFixDialogOpen,
+  } = useAIFix({
+    content,
+    onContentChange: setContent,
+    onErrorClear: handleErrorClear,
+  });
 
   // 处理渲染错误
   const handleRenderError = (error: AppError) => {
@@ -55,46 +79,7 @@ export default function Playground() {
     setTheme(value);
   };
 
-  // 处理 AI 修复
-  const handleAIFix = async () => {
-    if (!content.trim()) return;
 
-    setIsFixing(true);
-    try {
-
-      // 调用 AI 修复 API，明确指定使用豆包 API
-      const requestBody = { content };
-
-      const response = await fetch('/api/ai-fix', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.fixedContent) {
-        // 更新内容为修复后的代码
-        setContent(data.fixedContent);
-        toast.success(`${data.message || '语法已修复'}`);
-        setError(null);
-      } else {
-        toast.info(data.message || '代码无需修复');
-      }
-    } catch (err) {
-      console.error('AI 修复错误:', err);
-      toast.error('AI 修复失败，请稍后再试');
-    } finally {
-      setIsFixing(false);
-    }
-  };
 
   // 复制内容到剪贴板
   const handleCopyContent = async () => {
@@ -224,6 +209,19 @@ export default function Playground() {
         onOpenChange={setIsShareDialogOpen}
         content={content}
         theme={theme}
+      />
+
+      {/* AI 修复预览对话框 */}
+      <AIFixDialog
+        open={isAIFixDialogOpen}
+        onOpenChange={setIsAIFixDialogOpen}
+        originalContent={originalContent}
+        fixedContent={fixedContent}
+        fixMessage={fixMessage}
+        theme={theme}
+        onApplyFix={handleApplyFix}
+        onRejectFix={handleRejectFix}
+        isApplying={isApplyingFix}
       />
     </div>
   );

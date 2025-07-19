@@ -49,8 +49,7 @@ export const useMermaid = ({
         fontFamily: 'sans-serif',
         themeVariables: {
           // 可以在这里自定义主题变量
-        },
-        suppressErrors: true // 抑制错误渲染，由我们自己处理错误
+        }
       });
     } catch (err) {
       const appError: AppError = {

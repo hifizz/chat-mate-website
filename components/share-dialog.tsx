@@ -39,7 +39,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
   const [isCopied, setIsCopied] = useState(false);
 
   // 生成分享链接
-  const handleGenerateLink = async () => {
+  const handleGenerateLink = React.useCallback(async () => {
     setIsGenerating(true);
     setIsCopied(false);
     
@@ -55,7 +55,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [content, theme, darkMode]);
 
   // 复制链接到剪贴板
   const handleCopyLink = async () => {
@@ -74,7 +74,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     if (open && content.trim()) {
       handleGenerateLink();
     }
-  }, [open, content, theme, darkMode]);
+  }, [open, content, theme, darkMode, handleGenerateLink]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

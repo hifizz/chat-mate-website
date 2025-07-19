@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
       // provider: result.provider || 'local', // 不要暴露我们的模型
     });
 
-  } catch (error) {
+  } catch (err) {
+    console.error('AI 修复 API 错误:', err);
     return NextResponse.json(
       { error: '处理请求时发生错误' },
       { status: 500 }

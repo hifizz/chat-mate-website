@@ -117,3 +117,5 @@ export const TouchFriendlyContainer = forwardRef<TouchFriendlyContainerHandle, T
     </div>
   );
 });
+
+TouchFriendlyContainer.displayName = 'TouchFriendlyContainer';

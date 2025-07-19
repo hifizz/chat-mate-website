@@ -11,7 +11,7 @@ import { useThemeManager } from '@/hooks/use-theme-manager';
 import { Button } from '@/components/ui/button';
 import { copyToClipboard } from '@/utils/clipboard';
 import { toast } from 'sonner';
-import { Copy, Share2, Download } from 'lucide-react';
+import { Copy, Share2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // 默认的 Mermaid 图表示例

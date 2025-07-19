@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { MermaidThemeSelector } from '@/components/mermaid-theme-selector';
-import { MermaidTheme, ToolbarProps } from '@/types';
+import { ToolbarProps } from '@/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMobile } from '@/hooks/use-mobile';
 import { 
@@ -11,7 +11,6 @@ import {
   Wand2, 
   ZoomIn,
   ZoomOut,
-  RotateCcw,
   Menu
 } from 'lucide-react';
 import { 
@@ -44,7 +43,6 @@ export const Toolbar: React.FC<ResponsiveToolbarProps> = ({
   onZoomOut,
   onResetZoom,
   currentTheme,
-  availableThemes,
   scale,
   className = ''
 }) => {
