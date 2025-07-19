@@ -11,7 +11,6 @@ import { AppError, MermaidTheme } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { encodePakoContent } from '@/utils/pako';
 import { copyToClipboard } from '@/utils/clipboard';
 
 // 默认的 Mermaid 图表示例
@@ -30,7 +29,7 @@ export default function Playground() {
   const [isFixing, setIsFixing] = useState<boolean>(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState<boolean>(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState<boolean>(false);
-  
+
   // 用于导出功能的 ref
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
@@ -70,13 +69,13 @@ export default function Playground() {
         },
         body: JSON.stringify({ content }),
       });
-      
+
       if (!response.ok) {
         throw new Error('API 请求失败');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success && data.fixedContent) {
         // 更新内容为修复后的代码
         setContent(data.fixedContent);
@@ -157,27 +156,24 @@ export default function Playground() {
               <CardHeader className="pb-2">
                 <CardTitle>预览区</CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 p-0 relative">
-                {/* 错误提示 */}
-                {error && (
-                  <div className="absolute top-0 left-0 right-0 m-4 p-4 border border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-md text-red-800 dark:text-red-300 z-10">
-                    <h3 className="text-lg font-medium mb-2">渲染错误</h3>
-                    <p>{error.message}</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2" 
-                      onClick={handleAIFix}
-                      disabled={isFixing}
-                    >
-                      {isFixing ? '修复中...' : 'AI 修复'}
-                    </Button>
-                  </div>
-                )}
-                
-                {/* 图表预览 */}
-                <div ref={previewContainerRef} className="h-full min-h-[400px] p-4">
-                  <MermaidViewer 
+              <CardContent className="flex-1 p-0 flex flex-col">
+                {/* 错误提示 - 现在是垂直排列的一部分，而不是绝对定位 */}
+
+                {/* 图表预览 - 现在是垂直排列的一部分 */}
+                <div ref={previewContainerRef} className="flex-1 min-h-[300px] p-4">
+                  {error && (
+                    <div className='mb-2'>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAIFix}
+                        disabled={isFixing}
+                      >
+                        {isFixing ? '修复中...' : 'AI 修复'}
+                      </Button>
+                    </div>
+                  )}
+                  <MermaidViewer
                     content={content}
                     theme={theme}
                     onError={handleRenderError}

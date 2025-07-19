@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { MermaidConfig, AppError, ErrorType } from '@/types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AppError, ErrorType } from '@/types';
 import mermaid from 'mermaid';
+import { debounce } from 'lodash';
 
 interface UseMermaidProps {
   content: string;
@@ -31,12 +32,16 @@ export const useMermaid = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<AppError | null>(null);
 
+  // 使用 ref 来跟踪最新的内容，避免闭包问题
+  const contentRef = useRef(content);
+  contentRef.current = content;
+
   // 初始化 Mermaid 配置
   useEffect(() => {
     try {
       // 根据主题设置 Mermaid 配置
       const mermaidTheme = getMermaidTheme(theme);
-      
+
       mermaid.initialize({
         startOnLoad: false,
         theme: mermaidTheme,
@@ -44,7 +49,8 @@ export const useMermaid = ({
         fontFamily: 'sans-serif',
         themeVariables: {
           // 可以在这里自定义主题变量
-        }
+        },
+        suppressErrors: true // 抑制错误渲染，由我们自己处理错误
       });
     } catch (err) {
       const appError: AppError = {
@@ -73,44 +79,86 @@ export const useMermaid = ({
     }
   };
 
-  // 渲染 Mermaid 图表
-  const renderMermaid = useCallback(async (content: string) => {
+  // 渲染 Mermaid 图表的实际函数
+  const doRenderMermaid = useCallback(async (content: string) => {
     if (!content.trim()) {
       setSvg(null);
+      setLoading(false);
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       // 生成唯一 ID
       const id = `mermaid-${Date.now()}`;
-      
-      // 解析检查语法
-      const isValid = await mermaid.parse(content);
-      
-      if (!isValid) {
-        throw new Error('Mermaid 语法无效');
+
+      // 尝试解析语法
+      let isValid = false;
+      try {
+        // 使用 suppressErrors 选项，避免抛出异常
+        isValid = await mermaid.parse(content, { suppressErrors: true });
+      } catch (parseErr) {
+        // 即使使用了 suppressErrors，也可能会有异常，我们需要捕获它
+        isValid = false;
       }
-      
+
+      if (!isValid) {
+        // 如果解析失败，创建错误对象
+        const appError: AppError = {
+          type: ErrorType.RENDER_ERROR,
+          message: `Mermaid 语法错误: 请检查您的图表代码`,
+          details: { content }
+        };
+        setError(appError);
+        onError?.(appError);
+        setLoading(false);
+        return;
+      }
+
       // 渲染图表
-      const { svg } = await mermaid.render(id, content);
-      
-      // 更新 SVG
-      setSvg(svg);
-      setLoading(false);
+      try {
+        const { svg } = await mermaid.render(id, content);
+
+        // 更新 SVG
+        setSvg(svg);
+        setError(null); // 清除之前的错误
+      } catch (renderErr: any) {
+        // 处理渲染错误
+        const appError: AppError = {
+          type: ErrorType.RENDER_ERROR,
+          message: '渲染 Mermaid 图表失败',
+          details: renderErr.message || renderErr
+        };
+        setError(appError);
+        onError?.(appError);
+      }
     } catch (err: any) {
+      // 处理其他错误
       const appError: AppError = {
         type: ErrorType.RENDER_ERROR,
-        message: '渲染 Mermaid 图表失败',
+        message: '处理 Mermaid 图表时发生错误',
         details: err.message || err
       };
       setError(appError);
       onError?.(appError);
+    } finally {
       setLoading(false);
     }
   }, [onError]);
+
+  // 创建防抖版本的渲染函数
+  const debouncedRenderMermaid = useCallback(
+    debounce((content: string) => {
+      doRenderMermaid(content);
+    }, 300), // 300ms 的防抖延迟
+    [doRenderMermaid]
+  );
+
+  // 对外暴露的渲染函数
+  const renderMermaid = useCallback(async (content: string) => {
+    debouncedRenderMermaid(content);
+  }, [debouncedRenderMermaid]);
 
   // 内容变化时重新渲染
   useEffect(() => {
