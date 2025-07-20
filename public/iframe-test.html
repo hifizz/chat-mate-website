@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid 图表查看器 - iframe 嵌入测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .test-section h2 {
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .test-section p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        iframe {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+        }
+        .iframe-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+        .test-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .test-links {
+            margin-top: 10px;
+        }
+        .test-links a {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .test-links a:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mermaid 图表查看器 - iframe 嵌入功能测试</h1>
+        
+        <!-- 测试 1: 默认图表 -->
+        <div class="test-section">
+            <h2>测试 1: 默认图表显示</h2>
+            <p>测试在没有参数的情况下，iframe 是否能正常显示默认的示例图表。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test1-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test1-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test1-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- 测试 2: 简单流程图 -->
+        <div class="test-section">
+            <h2>测试 2: 简单流程图</h2>
+            <p>测试通过 pako 参数传递简单流程图内容的 iframe 嵌入。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test2-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test2-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test2-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- 测试 3: 复杂图表 -->
+        <div class="test-section">
+            <h2>测试 3: 复杂图表</h2>
+            <p>测试包含多个节点和连接的复杂图表的 iframe 嵌入。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test3-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test3-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test3-iframe" height="500" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- 测试 4: 主题参数 -->
+        <div class="test-section">
+            <h2>测试 4: 主题参数</h2>
+            <p>测试通过 theme 参数设置深色主题的 iframe 嵌入。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test4-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test4-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test4-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- 测试 5: 序列图 -->
+        <div class="test-section">
+            <h2>测试 5: 序列图</h2>
+            <p>测试序列图类型的 iframe 嵌入。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test5-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test5-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test5-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- 测试 6: 错误处理 -->
+        <div class="test-section">
+            <h2>测试 6: 错误处理</h2>
+            <p>测试无效的 pako 参数时的错误处理。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test6-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test6-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test6-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- 测试 7: 新嵌入页面 -->
+        <div class="test-section">
+            <h2>测试 7: 新嵌入页面 (/embed)</h2>
+            <p>测试新的嵌入页面，通过 code 参数传递图表内容。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test7-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test7-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test7-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- 测试 8: 嵌入页面序列图 -->
+        <div class="test-section">
+            <h2>测试 8: 嵌入页面序列图</h2>
+            <p>测试新嵌入页面渲染序列图。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test8-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test8-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test8-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+        
+        <!-- 测试 9: 嵌入页面深色模式 -->
+        <div class="test-section">
+            <h2>测试 9: 嵌入页面深色模式</h2>
+            <p>测试新嵌入页面的深色模式。</p>
+            <div class="test-info">
+                <strong>测试 URL:</strong> <code id="test9-url"></code>
+            </div>
+            <div class="test-links">
+                <a href="#" onclick="openInNewTab('test9-url')">在新标签页中打开</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test9-iframe" height="400" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取当前页面的基础 URL
+        const baseUrl = window.location.origin;
+        
+        // 预生成的测试链接（使用真正的 pako 压缩）
+        const testUrls = {
+            default: baseUrl,
+            simple: baseUrl + '?pako=eJxLL0osyFAIceFSAALH6Kd7Gp4u745V0NW1U3CKfrqk5fmEtliwnBNYzDn6-e7Jz-bOjwUAP2kVWA',
+            complex: baseUrl + '?pako=eJx9UU1Lw0AQvfsrQu_9C0rSz7QVPHhbclCUehJRPDVCWz8aSgORJBJbW4lUKYImBaHSQvJnspvNvzCZDQaCOJednfeY92amfX5wdsLtC1tcHBeXh234F0JjQZRVaI6i6UsBsCR4xOrU0_Htq8QVi9ucgKi9wKoZvY-o05N-uQKgpQ6rR90x9Qc7VwAfnx7Bm9MMvsd4aEfdDfXuM81S0kcmliNzZYTnN6F2R50VWfalHAVrbzJXQcTywvk6Mh6p42SUMripIupexyPwe2IGVQGqdeIiUTQ8fE5dJlHLxOuITL7Ig0tMl6ifUo4C4iJissyl9N-srAte9rNB6-CjgQJ_ij8srKRKeK1nYg3gNBH1DTyZhRudzJ7-0KkArZVeKxqose_0ZoCLDIe8Cfluuje2gcC3SS_dXgtw_gdFftn_',
+            themed: baseUrl + '?pako=eJxLL0osyFDwCeJSAALH6GdbW190bnqyY_fLRTNiFXR17RScop9t34gQA6tzAss4Rz9bvO7ZvOnIMs5gGZfoJzvWPmtYjizjApZxBAASXjCR&theme=dark',
+            sequence: baseUrl + '?pako=eJwrTi0sTc1LTnXJTEwvSszlUgCCgsSikszkzILEvBKFUIXEYoXnU1Y869iOIecGknva2ft89XoMOSew3IQ-bHIuILlnUzc86133dNdksDSYCNW1s3OzUnjWP-HJriUvFq542jsVLO4GEYeIvFzV82J9I1zcyUrhaf_Elw2NL9Zvf7axCSzuBBR3AZozf-mL9Ysg9oDFXXQhGl7sn_J09jwkCSddiA1PJ_c-3TXl-e7Jz-bNgdoAlAgFGjVj3_MluyASAM_jf68',
+            invalid: baseUrl + '?pako=invalid-content',
+            // 新嵌入页面测试链接
+            embedSimple: baseUrl + '/embed?code=' + encodeURIComponent('graph TD\n    A[嵌入测试] --> B[成功]'),
+            embedSequence: baseUrl + '/embed?code=' + encodeURIComponent('sequenceDiagram\n    participant A as 用户\n    participant B as 系统\n    A->>B: 请求\n    B-->>A: 响应'),
+            embedDark: baseUrl + '/embed?code=' + encodeURIComponent('graph TD\n    A[深色模式] --> B[测试]') + '&theme=dark'
+        };
+
+        // 设置测试 URL 和 iframe
+        function setupTest(testId, url) {
+            // 更新 URL 显示
+            document.getElementById(`${testId}-url`).textContent = url;
+            
+            // 设置 iframe src
+            document.getElementById(`${testId}-iframe`).src = url;
+        }
+
+        // 在新标签页中打开
+        function openInNewTab(urlElementId) {
+            const url = document.getElementById(urlElementId).textContent;
+            window.open(url, '_blank');
+        }
+
+        // 初始化所有测试
+        function initTests() {
+            // 测试 1: 默认图表
+            setupTest('test1', testUrls.default);
+            
+            // 测试 2: 简单流程图
+            setupTest('test2', testUrls.simple);
+            
+            // 测试 3: 复杂图表
+            setupTest('test3', testUrls.complex);
+            
+            // 测试 4: 主题参数
+            setupTest('test4', testUrls.themed);
+            
+            // 测试 5: 序列图
+            setupTest('test5', testUrls.sequence);
+            
+            // 测试 6: 错误处理
+            setupTest('test6', testUrls.invalid);
+            
+            // 测试 7: 新嵌入页面
+            setupTest('test7', testUrls.embedSimple);
+            
+            // 测试 8: 嵌入页面序列图
+            setupTest('test8', testUrls.embedSequence);
+            
+            // 测试 9: 嵌入页面深色模式
+            setupTest('test9', testUrls.embedDark);
+        }
+
+        // 页面加载完成后初始化测试
+        document.addEventListener('DOMContentLoaded', initTests);
+    </script>
+</body>
+</html>
