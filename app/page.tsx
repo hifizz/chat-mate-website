@@ -4,10 +4,14 @@ import { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MermaidViewer } from '@/components/mermaid-viewer';
 import { ShareDialog } from '@/components/share-dialog';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { ErrorDisplay } from '@/components/error-display';
 import { AppError, ErrorType, MermaidTheme } from '@/types';
 import { getURLParamsFromBrowser } from '@/utils/url';
-import { decodePakoContent } from '@/utils/pako';
+import { decodePakoContentWithMeta } from '@/utils/pako';
 import { useThemeManager } from '@/hooks/use-theme-manager';
+import { ErrorHandler } from '@/utils/error-handler';
+import { executeFallback } from '@/utils/fallback-strategies';
 import { Button } from '@/components/ui/button';
 import { copyToClipboard } from '@/utils/clipboard';
 import { toast } from 'sonner';
@@ -41,33 +45,81 @@ export default function Home() {
       // 如果有 pako 参数，解码内容
       if (params.pako) {
         try {
-          const decodedContent = decodePakoContent(params.pako);
-          setContent(decodedContent);
+          const decodeResult = decodePakoContentWithMeta(params.pako);
+          
+          setContent(decodeResult.content);
+          
+          // 如果是 Mermaid Live 格式且包含主题信息，优先使用解码出的主题
+          if (decodeResult.isMermaidLiveFormat && decodeResult.theme) {
+            console.log('使用 Mermaid Live 格式中的主题:', decodeResult.theme);
+            changeTheme(decodeResult.theme as MermaidTheme);
+          } else if (params.theme) {
+            // 否则使用 URL 参数中的主题
+            changeTheme(params.theme as MermaidTheme);
+          }
         } catch (err) {
-          setError({
-            type: ErrorType.DECODE_ERROR,
-            message: '无法解码 URL 内容',
-            details: err
-          });
-          // 保留默认内容
+          const appError = ErrorHandler.createError(
+            ErrorType.DECODE_ERROR,
+            '无法解码 URL 内容',
+            err
+          );
+          
+          // 尝试降级处理
+          const fallbackResult = executeFallback(appError);
+          if (fallbackResult.success && fallbackResult.content) {
+            setContent(fallbackResult.content);
+            toast.info(fallbackResult.message || '已显示默认示例图表');
+          } else {
+            setError(appError);
+            ErrorHandler.handle(appError);
+          }
         }
-      }
-      
-      // 设置主题
-      if (params.theme) {
-        changeTheme(params.theme as MermaidTheme);
+      } else {
+        // 没有 pako 参数时，仍然检查主题参数
+        if (params.theme) {
+          changeTheme(params.theme as MermaidTheme);
+        }
       }
       
       setIsLoading(false);
     } catch (err) {
-      setError({
-        type: ErrorType.URL_PARSE_ERROR,
-        message: '解析 URL 参数失败',
-        details: err
-      });
+      const appError = ErrorHandler.createError(
+        ErrorType.URL_PARSE_ERROR,
+        '解析 URL 参数失败',
+        err
+      );
+      
+      // 尝试降级处理
+      const fallbackResult = executeFallback(appError);
+      if (fallbackResult.success && fallbackResult.content) {
+        setContent(fallbackResult.content);
+        toast.info(fallbackResult.message || '已显示默认示例图表');
+      } else {
+        setError(appError);
+        ErrorHandler.handle(appError);
+      }
+      
       setIsLoading(false);
     }
   }, [changeTheme]);
+
+  // 监听内容降级事件
+  useEffect(() => {
+    const handleContentFallback = (event: CustomEvent) => {
+      const { content: fallbackContent, message } = event.detail;
+      setContent(fallbackContent);
+      setError(null); // 清除错误状态
+      if (message) {
+        toast.info(message);
+      }
+    };
+
+    window.addEventListener('contentFallback', handleContentFallback as EventListener);
+    
+    return () => {
+      window.removeEventListener('contentFallback', handleContentFallback as EventListener);
+    };
+  }, []);
 
   // 处理渲染错误
   const handleRenderError = (error: AppError) => {
@@ -184,7 +236,13 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <ErrorBoundary
+      onError={(error) => {
+        console.error('应用错误边界捕获到错误:', error);
+        setError(error);
+      }}
+    >
+      <div className="flex flex-col min-h-screen">
       {/* 顶部导航栏 */}
       <header className="sticky top-0 z-10 bg-background border-b border-border h-14 flex items-center px-4">
         <h1 className="text-lg font-semibold flex-1">Mermaid 图表查看器</h1>
@@ -201,9 +259,16 @@ export default function Home() {
         <div className="container mx-auto h-full flex flex-col">
           {/* 错误提示 */}
           {error && !isLoading && (
-            <div className="mb-4 p-4 border border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-md text-red-800 dark:text-red-300">
-              <h3 className="text-lg font-medium mb-2">发生错误</h3>
-              <p>{error.message}</p>
+            <div className="mb-4">
+              <ErrorDisplay
+                error={error}
+                onRetry={() => {
+                  setError(null);
+                  window.location.reload();
+                }}
+                onDismiss={() => setError(null)}
+                showDetails={process.env.NODE_ENV === 'development'}
+              />
             </div>
           )}
 
@@ -268,5 +333,6 @@ export default function Home() {
         theme={currentTheme}
       />
     </div>
+    </ErrorBoundary>
   );
 }

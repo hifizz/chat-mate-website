@@ -3,6 +3,8 @@ import { MermaidViewerProps, MermaidTheme } from '@/types';
 import { useMermaid } from '@/hooks/use-mermaid';
 import { TouchFriendlyContainer, TouchFriendlyContainerHandle } from '@/components/touch-friendly-container';
 import { Toolbar } from '@/components/toolbar';
+import { ErrorDisplay } from '@/components/error-display';
+import { executeFallback } from '@/utils/fallback-strategies';
 
 /**
  * Mermaid 图表查看器组件
@@ -46,16 +48,26 @@ export const MermaidViewer: React.FC<MermaidViewerProps> = ({
     if (!error) return null;
 
     return (
-      <div className="p-4 border border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-md text-red-800 dark:text-red-300">
-        <h3 className="text-lg font-medium mb-2">渲染错误</h3>
-        <p>{error.message}</p>
-        {error.details && (
-          <pre className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded overflow-auto text-sm">
-            {typeof error.details === 'string'
-              ? error.details
-              : JSON.stringify(error.details, null, 2)}
-          </pre>
-        )}
+      <div className="p-4">
+        <ErrorDisplay
+          error={error}
+          onRetry={() => {
+            // 尝试降级处理
+            const fallbackResult = executeFallback(error, { content });
+            if (fallbackResult.success && fallbackResult.content) {
+              // 通过自定义事件通知父组件更新内容
+              const event = new CustomEvent('contentFallback', {
+                detail: { content: fallbackResult.content, message: fallbackResult.message }
+              });
+              window.dispatchEvent(event);
+            } else {
+              // 重新渲染当前内容
+              window.location.reload();
+            }
+          }}
+          compact={true}
+          showDetails={process.env.NODE_ENV === 'development'}
+        />
       </div>
     );
   };

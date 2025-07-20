@@ -1,5 +1,6 @@
 import { useState, useCallback, RefObject, useEffect, useRef } from 'react';
 import { ZoomState } from '@/types';
+import { debounce, throttle } from 'lodash';
 
 interface UseZoomControllerProps {
   targetRef: RefObject<HTMLElement>;
@@ -62,8 +63,10 @@ export const useZoomController = ({
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 防抖处理
+  // 防抖和节流处理
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastWheelTimeRef = useRef<number>(0);
+  const wheelAccumulatorRef = useRef<number>(0);
 
   // 设置缩放比例（带边界限制）
   const setZoom = useCallback((newScale: number, animate: boolean = false) => {
@@ -123,21 +126,58 @@ export const useZoomController = ({
     onZoomChange?.(initialScale);
   }, [initialScale, onZoomChange, animationDuration]);
 
-  // 处理滚轮缩放（带防抖）
+  // 创建节流版本的缩放更新函数
+  const throttledZoomUpdate = useCallback(
+    throttle((newScale: number, newTranslateX: number, newTranslateY: number) => {
+      setScale(newScale);
+      setTranslateX(newTranslateX);
+      setTranslateY(newTranslateY);
+      onZoomChange?.(newScale);
+    }, 16), // 约 60fps 的更新频率
+    [onZoomChange]
+  );
+
+  // 创建防抖版本的动画触发函数
+  const debouncedAnimationTrigger = useCallback(
+    debounce(() => {
+      setIsAnimating(true);
+      
+      // 动画结束后重置状态
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      
+      animationTimeoutRef.current = setTimeout(() => {
+        setIsAnimating(false);
+        animationTimeoutRef.current = null;
+      }, animationDuration);
+    }, 100), // 100ms 防抖延迟
+    [animationDuration]
+  );
+
+  // 处理滚轮缩放（优化的防抖和节流）
   const handleWheel = useCallback((e: React.WheelEvent<HTMLElement>) => {
     e.preventDefault();
 
-    // 清除之前的防抖超时
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
+    const now = Date.now();
+    const timeDelta = now - lastWheelTimeRef.current;
+    
+    // 如果距离上次滚轮事件时间过长，重置累积器
+    if (timeDelta > 100) {
+      wheelAccumulatorRef.current = 0;
     }
+    
+    lastWheelTimeRef.current = now;
+
+    // 累积滚轮增量，提供更平滑的缩放体验
+    const delta = e.deltaY * -0.01;
+    wheelAccumulatorRef.current += delta;
 
     // 计算新的缩放比例
-    const delta = e.deltaY * -0.01;
-    const newScale = Math.min(Math.max(scale + delta, minScale), maxScale);
+    const newScale = Math.min(Math.max(scale + wheelAccumulatorRef.current, minScale), maxScale);
 
     // 如果缩放比例没有变化，则不需要进一步处理
-    if (newScale === scale) return;
+    if (Math.abs(newScale - scale) < 0.001) return;
 
     // 获取鼠标相对于目标元素的位置
     if (targetRef.current) {
@@ -150,29 +190,20 @@ export const useZoomController = ({
       const newTranslateX = mouseX - (mouseX - translateX) * scaleFactor;
       const newTranslateY = mouseY - (mouseY - translateY) * scaleFactor;
 
-      // 应用新的缩放和平移
-      setTranslateX(newTranslateX);
-      setTranslateY(newTranslateY);
-      setScale(newScale);
-      onZoomChange?.(newScale);
+      // 使用节流更新状态，确保流畅的视觉反馈
+      throttledZoomUpdate(newScale, newTranslateX, newTranslateY);
 
-      // 设置防抖超时，在滚轮停止后添加动画效果
-      debounceTimeoutRef.current = setTimeout(() => {
-        setIsAnimating(true);
+      // 重置累积器
+      wheelAccumulatorRef.current = 0;
 
-        // 动画结束后重置状态
-        animationTimeoutRef.current = setTimeout(() => {
-          setIsAnimating(false);
-          animationTimeoutRef.current = null;
-        }, animationDuration);
-
-        debounceTimeoutRef.current = null;
-      }, 150); // 150ms 防抖延迟
+      // 触发防抖动画
+      debouncedAnimationTrigger();
     } else {
       // 如果没有目标元素，则简单地更新缩放比例
       setZoom(newScale);
+      wheelAccumulatorRef.current = 0;
     }
-  }, [scale, translateX, translateY, minScale, maxScale, setZoom, targetRef, onZoomChange, animationDuration]);
+  }, [scale, translateX, translateY, minScale, maxScale, setZoom, targetRef, throttledZoomUpdate, debouncedAnimationTrigger]);
 
   // 处理触摸开始
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLElement>) => {

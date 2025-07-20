@@ -599,3 +599,236 @@ flowchart TD
 - **功能开关**: 通过配置控制功能的启用/禁用
 - **API 配置**: 支持动态配置 AI 服务端点
 - **UI 定制**: 支持界面元素的显示/隐藏配置
+
+## Mermaid Live 兼容性设计
+
+### 概述
+
+为了提供与 Mermaid Live 的完全兼容性，系统需要支持解析和处理 Mermaid Live 特有的数据格式。Mermaid Live 使用 JSON 对象来存储图表数据，包含代码、主题、视图状态等信息。
+
+### 数据格式对比
+
+#### 我们的原始格式（纯文本）
+```
+?pako=eNqrVkosLcmIz8nPS1WyUoJBBSBQq1YLABbcCBE
+```
+解码后直接得到 Mermaid 代码字符串。
+
+#### Mermaid Live 格式（JSON 对象）
+```json
+{
+  "code": "mindmap\n  root((示例))\n    分支1\n    分支2",
+  "mermaid": "{\n  \"theme\": \"default\"\n}",
+  "grid": true,
+  "panZoom": true,
+  "rough": false,
+  "updateDiagram": true,
+  "renderCount": 5,
+  "pan": {"x": 221.75, "y": 95.81},
+  "zoom": 0.7989,
+  "editorMode": "code"
+}
+```
+
+### 架构设计
+
+#### 增强的 Pako 解码模块
+
+```typescript
+// utils/pako.ts
+
+interface MermaidLiveData {
+  code: string;
+  mermaid?: string;
+  theme?: string;
+  grid?: boolean;
+  panZoom?: boolean;
+  rough?: boolean;
+  pan?: { x: number; y: number };
+  zoom?: number;
+  [key: string]: any;
+}
+
+interface DecodeResult {
+  content: string;
+  theme?: string;
+  isMermaidLiveFormat: boolean;
+  metadata?: {
+    grid?: boolean;
+    panZoom?: boolean;
+    rough?: boolean;
+    pan?: { x: number; y: number };
+    zoom?: number;
+  };
+}
+
+export const decodePakoContentWithMeta = (encoded: string): DecodeResult => {
+  // 1. 标准 pako 解码
+  // 2. 尝试 JSON 解析
+  // 3. 识别 Mermaid Live 格式
+  // 4. 提取代码和元数据
+  // 5. 返回统一格式的结果
+}
+```
+
+#### 兼容性处理流程
+
+```mermaid
+flowchart TD
+    A[接收 pako 参数] --> B[Pako 解码]
+    B --> C{尝试 JSON 解析}
+    C -->|成功| D{检查 code 字段}
+    C -->|失败| E[纯文本格式]
+    D -->|存在| F[Mermaid Live 格式]
+    D -->|不存在| E
+    F --> G[提取 code 字段]
+    F --> H[提取主题信息]
+    F --> I[提取其他元数据]
+    E --> J[直接使用内容]
+    G --> K[统一处理]
+    H --> K
+    I --> K
+    J --> K
+    K --> L[渲染图表]
+```
+
+### 主题提取策略
+
+Mermaid Live 的主题信息可能存储在多个位置：
+
+1. **mermaid 字段中的 JSON 配置**
+   ```json
+   "mermaid": "{\"theme\": \"default\"}"
+   ```
+
+2. **顶级 theme 字段**
+   ```json
+   "theme": "dark"
+   ```
+
+3. **URL 参数中的 theme**
+   ```
+   ?pako=...&theme=forest
+   ```
+
+**优先级顺序**：
+1. Mermaid Live 格式中的 mermaid.theme
+2. Mermaid Live 格式中的 theme
+3. URL 参数中的 theme
+4. 系统默认主题
+
+### 实现细节
+
+#### 1. 解码函数增强
+
+```typescript
+export const decodePakoContentWithMeta = (encoded: string): DecodeResult => {
+  try {
+    const decodedString = performPakoDecoding(encoded);
+    
+    // 尝试解析为 Mermaid Live 格式
+    try {
+      const parsed: MermaidLiveData = JSON.parse(decodedString);
+      
+      if (parsed && typeof parsed === 'object' && parsed.code) {
+        return {
+          content: parsed.code,
+          theme: extractTheme(parsed),
+          isMermaidLiveFormat: true,
+          metadata: extractMetadata(parsed)
+        };
+      }
+    } catch (jsonError) {
+      // 不是 JSON 格式，按纯文本处理
+    }
+    
+    return {
+      content: decodedString,
+      isMermaidLiveFormat: false
+    };
+  } catch (error) {
+    throw new Error('解码失败');
+  }
+};
+
+function extractTheme(data: MermaidLiveData): string | undefined {
+  // 优先从 mermaid 配置中提取
+  if (data.mermaid) {
+    try {
+      const mermaidConfig = JSON.parse(data.mermaid);
+      if (mermaidConfig.theme) return mermaidConfig.theme;
+    } catch (e) {
+      console.warn('无法解析 mermaid 配置');
+    }
+  }
+  
+  // 其次从顶级 theme 字段提取
+  return data.theme;
+}
+```
+
+#### 2. URL 参数处理增强
+
+```typescript
+// app/page.tsx 中的处理逻辑
+useEffect(() => {
+  const params = getURLParamsFromBrowser();
+  
+  if (params.pako) {
+    const decodeResult = decodePakoContentWithMeta(params.pako);
+    
+    setContent(decodeResult.content);
+    
+    // 主题优先级处理
+    if (decodeResult.isMermaidLiveFormat && decodeResult.theme) {
+      // 使用 Mermaid Live 格式中的主题
+      changeTheme(decodeResult.theme as MermaidTheme);
+    } else if (params.theme) {
+      // 使用 URL 参数中的主题
+      changeTheme(params.theme as MermaidTheme);
+    }
+    
+    // 处理其他元数据（如果需要）
+    if (decodeResult.metadata) {
+      handleMetadata(decodeResult.metadata);
+    }
+  }
+}, [changeTheme]);
+```
+
+### 向后兼容性保证
+
+1. **现有功能不受影响**：所有现有的纯文本格式链接继续正常工作
+2. **渐进式增强**：新功能作为现有功能的扩展，不破坏原有逻辑
+3. **错误降级**：当 Mermaid Live 格式解析失败时，自动降级为纯文本处理
+4. **类型安全**：使用 TypeScript 接口确保类型安全
+
+### 测试策略
+
+#### 单元测试
+- 测试纯文本格式解码
+- 测试 Mermaid Live 格式解码
+- 测试主题提取逻辑
+- 测试错误处理和降级
+
+#### 集成测试
+- 测试完整的 URL 解析流程
+- 测试主题应用
+- 测试与现有功能的兼容性
+
+#### 兼容性测试
+- 使用真实的 Mermaid Live 链接进行测试
+- 验证与 Mermaid Live 的显示一致性
+- 测试各种边界情况
+
+### 性能考虑
+
+1. **解析开销**：JSON 解析的性能开销很小，不会影响用户体验
+2. **内存使用**：只提取必要的字段，避免存储完整的 Mermaid Live 数据
+3. **缓存策略**：解码结果可以缓存，避免重复解析
+
+### 安全考虑
+
+1. **JSON 解析安全**：使用安全的 JSON.parse，避免代码注入
+2. **数据验证**：验证解析出的数据结构和内容
+3. **错误处理**：妥善处理解析错误，避免系统崩溃

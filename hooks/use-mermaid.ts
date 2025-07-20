@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppError, ErrorType } from '@/types';
 import mermaid from 'mermaid';
 import { debounce } from 'lodash';
+import { renderCache } from '@/utils/render-cache';
 
 interface UseMermaidProps {
   content: string;
@@ -86,6 +87,15 @@ export const useMermaid = ({
       return;
     }
 
+    // 首先检查缓存
+    const cachedSvg = renderCache.get(content, theme);
+    if (cachedSvg) {
+      setSvg(cachedSvg);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -96,7 +106,9 @@ export const useMermaid = ({
       let isValid = false;
       try {
         // 使用 suppressErrors 选项，避免抛出异常
-        isValid = await mermaid.parse(content, { suppressErrors: true });
+        // 注意：mermaid.parse 返回布尔值，但可能是异步的
+        const parseResult = mermaid.parse(content, { suppressErrors: true });
+        isValid = parseResult === true || await Promise.resolve(parseResult);
       } catch (parseErr) {
         // 即使使用了 suppressErrors，也可能会有异常，我们需要捕获它
         isValid = false;
@@ -118,6 +130,9 @@ export const useMermaid = ({
       // 渲染图表
       try {
         const { svg } = await mermaid.render(id, content);
+
+        // 将结果存入缓存
+        renderCache.set(content, theme, svg);
 
         // 更新 SVG
         setSvg(svg);
@@ -144,7 +159,7 @@ export const useMermaid = ({
     } finally {
       setLoading(false);
     }
-  }, [onError]);
+  }, [onError, theme]);
 
   // 创建防抖版本的渲染函数
   const debouncedRenderMermaid = useCallback(

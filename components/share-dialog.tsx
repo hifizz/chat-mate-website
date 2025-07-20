@@ -42,7 +42,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
   const handleGenerateLink = React.useCallback(async () => {
     setIsGenerating(true);
     setIsCopied(false);
-    
+
     try {
       const result = await processContentForSharing(content, theme, darkMode);
       setShareResult(result);
@@ -114,21 +114,20 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
                   )}
                 </Button>
               </div>
-              
+
               {/* URL 长度状态 */}
               {(() => {
                 const urlStatus = getURLLengthStatus(shareResult.url);
                 return (
-                  <div className={`text-xs ${
-                    urlStatus.status === 'danger' ? 'text-red-600' :
-                    urlStatus.status === 'warning' ? 'text-yellow-600' :
-                    'text-green-600'
-                  }`}>
+                  <div className={`text-xs ${urlStatus.status === 'danger' ? 'text-red-600' :
+                      urlStatus.status === 'warning' ? 'text-yellow-600' :
+                        'text-green-600'
+                    }`}>
                     {urlStatus.message}
                   </div>
                 );
               })()}
-              
+
               {isCopied && (
                 <p className="text-sm text-green-600">
                   链接已复制到剪贴板！

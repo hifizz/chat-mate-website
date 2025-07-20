@@ -8,11 +8,14 @@ import { ControlPanel } from '@/components/control-panel';
 import { ExportDialog } from '@/components/export-dialog';
 import { ShareDialog } from '@/components/share-dialog';
 import { AIFixDialog } from '@/components/ai-fix-dialog';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { AppError, MermaidTheme } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/utils/clipboard';
+import { processContentForSharing } from '@/utils/share';
+import { ExternalLink } from 'lucide-react';
 
 
 // 默认的 Mermaid 图表示例
@@ -90,12 +93,65 @@ export default function Playground() {
     toast.info('已重置为默认内容');
   };
 
+  // 在主页查看当前图表
+  const handleViewInHome = async () => {
+    try {
+      // 验证内容是否为空
+      if (!content.trim()) {
+        toast.error('请先输入 Mermaid 图表内容');
+        return;
+      }
+
+      // 显示加载提示
+      toast.info('正在生成链接...');
+
+      console.log('开始生成分享链接...');
+      console.log('当前内容:', content);
+      console.log('当前主题:', theme);
+
+      // 生成包含当前内容的分享链接
+      const shareResult = await processContentForSharing(content, theme);
+
+      console.log('分享结果:', shareResult);
+
+      if (shareResult.success && shareResult.url) {
+        // 修改 URL 路径为首页
+        const url = new URL(shareResult.url);
+        const homeUrl = `${window.location.origin}/?${url.searchParams.toString()}`;
+
+        console.log('准备跳转到:', homeUrl);
+
+        // 显示成功提示
+        toast.success('正在跳转到主页...');
+
+        // 跳转到首页展示当前图表
+        window.location.href = homeUrl;
+      } else {
+        console.error('分享失败:', shareResult.error);
+        toast.error(shareResult.error || '生成链接失败');
+      }
+    } catch (error) {
+      console.error('跳转到主页失败:', error);
+      toast.error('跳转失败，请稍后重试');
+    }
+  };
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <ErrorBoundary
+      onError={(error) => {
+        console.error('Playground 错误边界捕获到错误:', error);
+        setError(error);
+      }}
+    >
+      <div className="flex flex-col min-h-screen">
       {/* 顶部导航栏 */}
       <header className="sticky top-0 z-10 bg-background border-b border-border h-14 flex items-center px-4">
         <h1 className="text-lg font-semibold flex-1">Mermaid Playground</h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleViewInHome}>
+            <ExternalLink className="h-4 w-4 mr-2" />
+            在主页查看
+          </Button>
           <Button variant="outline" size="sm" onClick={() => window.location.href = '/'}>
             返回主页
           </Button>
@@ -159,7 +215,7 @@ export default function Playground() {
               theme={theme}
               onThemeChange={handleThemeChange}
               onCopyContent={handleCopyContent}
-              onAIFix={() => {}} // 现在由 AIFixDialog 内部处理
+              onAIFix={() => { }} // 现在由 AIFixDialog 内部处理
               onShare={handleShare}
               onExport={handleExport}
               onReset={handleReset}
@@ -193,5 +249,6 @@ export default function Playground() {
 
 
     </div>
+    </ErrorBoundary>
   );
 }

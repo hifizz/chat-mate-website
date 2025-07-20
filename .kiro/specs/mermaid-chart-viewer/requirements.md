@@ -113,3 +113,17 @@ equirement 9
 5. WHEN 编辑区的代码存在语法错误 THEN 系统 SHALL 在预览区显示错误信息并提示使用 AI 修复功能
 6. WHEN 用户在参数控制面板中调整设置 THEN 系统 SHALL 实时应用这些设置到预览图表
 7. WHEN 用户完成编辑 THEN 系统 SHALL 提供保存、导出和分享功能
+#
+## Requirement 10
+
+**User Story:** 作为用户，我希望系统能够兼容 Mermaid Live 的分享链接格式，这样我可以在不同平台之间无缝切换和分享图表。
+
+#### Acceptance Criteria
+
+1. WHEN 用户访问包含 Mermaid Live 格式 pako 参数的 URL THEN 系统 SHALL 正确识别并解析 JSON 格式的数据结构
+2. WHEN 系统解析 Mermaid Live 格式数据 THEN 系统 SHALL 提取其中的 code 字段作为 Mermaid 图表内容
+3. WHEN Mermaid Live 格式数据包含主题信息 THEN 系统 SHALL 自动应用相应的主题设置
+4. WHEN 系统检测到 Mermaid Live 格式 THEN 系统 SHALL 优先使用数据中的主题配置而非 URL 参数中的主题
+5. WHEN 用户从 Mermaid Live 复制的链接在我们系统中打开 THEN 系统 SHALL 显示与 Mermaid Live 中相同的图表内容和样式
+6. WHEN 系统无法解析 Mermaid Live 格式数据 THEN 系统 SHALL 降级处理并显示友好的错误提示
+7. WHEN 系统同时支持两种格式 THEN 系统 SHALL 保持向后兼容性，不影响现有的分享链接功能
