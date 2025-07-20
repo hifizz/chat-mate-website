@@ -192,7 +192,7 @@ export default function EmbedPage() {
                 </svg>
                 <span className="theme-text">亮色</span>
               </button>
-              
+
               {/* Export Button */}
               <div className="relative tooltip-trigger">
                 <button id="export-button" className="toolbar-button">
@@ -208,7 +208,7 @@ export default function EmbedPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Code Preview Button */}
               <div className="relative tooltip-trigger">
                 <button className="toolbar-button">
@@ -233,7 +233,7 @@ export default function EmbedPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Fit to Screen Button */}
               <button id="fit-screen" className="toolbar-button">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,7 +246,7 @@ export default function EmbedPage() {
           {/* Diagram Container */}
           <div className="flex-1 p-4 overflow-auto relative" id="diagram-container">
             <div id="mermaid-diagram" className="mermaid-diagram flex justify-center items-center min-h-full"></div>
-            
+
             {/* Zoom Controls */}
             <div className="zoom-controls">
               <button id="zoom-in" className="zoom-button" title="放大">
@@ -468,7 +468,7 @@ export default function EmbedPage() {
               // 更新缩放级别显示
               function updateZoomLevel() {
                 zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
-                mermaidDiagram.style.transform = `scale(${currentZoom})`;
+                mermaidDiagram.style.transform = `scale(${ currentZoom })`;
               }
               
               // 放大
